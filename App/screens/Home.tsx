@@ -1,13 +1,8 @@
-import React, {useCallback, useRef, useMemo} from 'react';
-import {
-  View,
-  StyleSheet,
-  Animated,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from 'react-native';
-import {TitleInput} from '../components/TitleInput';
-import NoteInput from '../components/NoteInput';
+import React, {useCallback, useEffect, useState, useMemo} from 'react';
+import {View, StyleSheet, Text} from 'react-native';
+import {useAsyncStorage} from '@react-native-community/async-storage';
+import {Note} from '../components/Note';
+import {INote} from '../utils/interfaces';
 
 const styles = StyleSheet.create({
   container: {
@@ -15,74 +10,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
-  scrollView: {
-    flexGrow: 1,
-    paddingTop: 10,
-    overflow: 'visible',
-    flexDirection: 'column',
-  },
-  content: {
-    flex: 1,
-  },
-  noteInputContainer: {
-    flex: 1,
-    backgroundColor: 'green',
-    paddingTop: 12,
-    height: 400,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });
 
 export function Home() {
-  const scrollPosition = useRef(new Animated.Value(0)).current;
-  const onChangeTitleText = useCallback((value: string) => {}, []);
-  const onChangeNoteText = useCallback((value: string) => {}, []);
+  const {getItem, setItem} = useAsyncStorage('notes');
+  const [notes, setNotes] = useState<INote[] | null>(null);
 
-  const event = Animated.event(
-    [{nativeEvent: {contentOffset: {x: scrollPosition}}}],
-    {useNativeDriver: true},
+  const readItemAsyncStorage = useCallback(async () => {
+    try {
+      const res = await getItem();
+      console.log(res);
+      if (res) {
+        setNotes(JSON.parse(res));
+      }
+    } catch (error) {}
+  }, [getItem]);
+
+  useEffect(() => {
+    readItemAsyncStorage();
+  }, []);
+
+  const onSaveNote = useCallback(
+    async (value: INote) => {
+      try {
+        if (value.title.trim().length) {
+          if (notes) {
+            await setItem(JSON.stringify([...notes, value]));
+            setNotes([...notes, value]);
+          } else {
+            await setItem(JSON.stringify([value]));
+            setNotes([value]);
+          }
+        }
+      } catch (e) {}
+    },
+    [notes, setItem],
   );
 
-  const onScrollEndDrag = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {},
-    [],
-  );
+  const noteId = useMemo(() => {
+    return notes ? notes[notes.length - 1].id + 1 : 0;
+  }, [notes]);
 
-  const rotate = useMemo(
-    () =>
-      scrollPosition.interpolate({
-        inputRange: [-1000, 0, 1000],
-        outputRange: [6, 0, -6],
-      }),
-    [scrollPosition],
-  );
-
-  const translateX = useMemo(
-    () =>
-      scrollPosition.interpolate({
-        inputRange: [-100, 0, 100],
-        outputRange: [500, 0, -500],
-      }),
-    [scrollPosition],
-  );
-
+  console.log(notes);
   return (
     <View style={styles.container}>
-      <Animated.ScrollView
-        horizontal
-        onScroll={event}
-        scrollEventThrottle={1}
-        directionalLockEnabled={true}
-        onScrollEndDrag={onScrollEndDrag}
-        style={styles.scrollView}>
-        <Animated.View
-          style={[styles.content, {transform: [{rotate}, {translateX}]}]}>
-          <TitleInput placeholder="Title" onChangeText={onChangeTitleText} />
-          <NoteInput
-            placeholder="Something very cool"
-            onChangeText={onChangeNoteText}
-          />
-        </Animated.View>
-      </Animated.ScrollView>
+      <View style={styles.header}>
+        <Text>&larr; Delete</Text>
+        <Text>Add &rarr;</Text>
+      </View>
+      <Note onSaveNote={onSaveNote} id={noteId} />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, {useRef, useCallback, useMemo, useState} from 'react';
+import React, {useRef, useCallback, useMemo, useState, useEffect} from 'react';
 import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
 import Animated, {Easing} from 'react-native-reanimated';
 
@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
 
 interface Props extends TextInputProps {
   onChangeText: (value: string) => void;
+  deleted: boolean;
 }
 
 export const TitleInput = (props: Props) => {
@@ -50,6 +51,17 @@ export const TitleInput = (props: Props) => {
   const [placeholderText] = useState(props.placeholder || props.value);
   const [value, setValue] = useState('');
   const {onChangeText} = props;
+
+  useEffect(() => {
+    if (props.deleted) {
+      setValue('');
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.quad,
+      }).start();
+    }
+  }, [props.deleted]);
 
   const handleChangeText = useCallback(
     (text: string) => {
@@ -94,6 +106,7 @@ export const TitleInput = (props: Props) => {
           onFocus={onFocus}
           style={styles.textInputStyle}
           onChangeText={handleChangeText}
+          value={value}
         />
       </Animated.View>
       <Animated.Text
