@@ -1,34 +1,31 @@
-import React, {useRef, useCallback, useMemo, useState, useEffect} from 'react';
+import React, {useState, useRef, useCallback, useMemo, useEffect} from 'react';
 import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
 import Animated, {Easing} from 'react-native-reanimated';
 import {INote} from '../utils/interfaces';
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    height: 50,
-    justifyContent: 'center',
-    overflow: 'visible',
+    flex: 1,
   },
   inputContainer: {
-    backgroundColor: 'white',
     flex: 1,
+    backgroundColor: 'white',
     borderRadius: 2,
-    borderTopEndRadius: 16,
-    borderTopStartRadius: 16,
+    borderBottomEndRadius: 16,
+    borderBottomStartRadius: 16,
     shadowColor: 'black',
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowOffset: {
       width: 0,
-      height: 0,
+      height: 10,
     },
     shadowRadius: 8,
     elevation: 1,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
   textInputStyle: {
-    flex: 1,
-    fontSize: 25,
-    paddingHorizontal: 10,
+    fontSize: 20,
   },
   placeholder: {
     position: 'absolute',
@@ -36,9 +33,6 @@ const styles = StyleSheet.create({
     zIndex: -1,
     fontSize: 25,
     left: 10,
-  },
-  blackTitle: {
-    color: 'black',
   },
 });
 
@@ -48,11 +42,11 @@ interface Props extends TextInputProps {
   note?: INote;
 }
 
-export const TitleInput = (props: Props) => {
+const NoteInput = (props: Props) => {
   const {onChangeText, note} = props;
-  const animValue = useRef(new Animated.Value(0)).current;
   const [placeholderText] = useState(props.placeholder || props.value);
-  const [value, setValue] = useState(note?.title || '');
+  const [value, setValue] = useState(note?.note || '');
+  const animValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (props.deleted) {
@@ -73,16 +67,8 @@ export const TitleInput = (props: Props) => {
     [onChangeText],
   );
 
-  const onFocus = useCallback(() => {
-    Animated.timing(animValue, {
-      toValue: 1,
-      duration: 200,
-      easing: Easing.quad,
-    }).start();
-  }, [animValue]);
-
   const onBlur = useCallback(() => {
-    if (!value.trim().length) {
+    if (value && !value.trim().length) {
       Animated.timing(animValue, {
         toValue: 0,
         duration: 200,
@@ -90,6 +76,13 @@ export const TitleInput = (props: Props) => {
       }).start();
     }
   }, [animValue, value]);
+  const onFocus = useCallback(() => {
+    Animated.timing(animValue, {
+      toValue: 1,
+      duration: 200,
+      easing: Easing.quad,
+    }).start();
+  }, [animValue]);
 
   const inputContainerOpacity = useMemo(() => {
     if (note) {
@@ -116,6 +109,8 @@ export const TitleInput = (props: Props) => {
       <Animated.View
         style={[styles.inputContainer, {opacity: inputContainerOpacity}]}>
         <TextInput
+          numberOfLines={4}
+          multiline
           onBlur={onBlur}
           onFocus={onFocus}
           style={styles.textInputStyle}
@@ -124,13 +119,11 @@ export const TitleInput = (props: Props) => {
         />
       </Animated.View>
       <Animated.Text
-        style={[
-          {opacity: placeholderOpacity},
-          styles.placeholder,
-          value.trim().length !== 0 && styles.blackTitle,
-        ]}>
+        style={[{opacity: placeholderOpacity}, styles.placeholder]}>
         {placeholderText}
       </Animated.Text>
     </View>
   );
 };
+
+export default NoteInput;
