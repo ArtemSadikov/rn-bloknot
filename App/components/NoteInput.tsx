@@ -1,6 +1,7 @@
 import React, {useState, useRef, useCallback, useMemo, useEffect} from 'react';
 import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
 import Animated, {Easing} from 'react-native-reanimated';
+import {INote} from '../utils/interfaces';
 
 const styles = StyleSheet.create({
   container: {
@@ -38,13 +39,14 @@ const styles = StyleSheet.create({
 interface Props extends TextInputProps {
   onChangeText: (value: string) => void;
   deleted: boolean;
+  note?: INote;
 }
 
 const NoteInput = (props: Props) => {
+  const {onChangeText, note} = props;
   const [placeholderText] = useState(props.placeholder || props.value);
-  const [value, setValue] = useState(props.value);
+  const [value, setValue] = useState(note?.note || '');
   const animValue = useRef(new Animated.Value(0)).current;
-  const {onChangeText} = props;
 
   useEffect(() => {
     if (props.deleted) {
@@ -82,7 +84,18 @@ const NoteInput = (props: Props) => {
     }).start();
   }, [animValue]);
 
-  const opacity = useMemo(
+  const inputContainerOpacity = useMemo(() => {
+    if (note) {
+      return 1;
+    }
+
+    return animValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+  }, [animValue, note]);
+
+  const placeholderOpacity = useMemo(
     () =>
       animValue.interpolate({
         inputRange: [0, 1],
@@ -93,7 +106,8 @@ const NoteInput = (props: Props) => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.inputContainer, {opacity: animValue}]}>
+      <Animated.View
+        style={[styles.inputContainer, {opacity: inputContainerOpacity}]}>
         <TextInput
           numberOfLines={4}
           multiline
@@ -104,7 +118,8 @@ const NoteInput = (props: Props) => {
           value={value}
         />
       </Animated.View>
-      <Animated.Text style={[{opacity}, styles.placeholder]}>
+      <Animated.Text
+        style={[{opacity: placeholderOpacity}, styles.placeholder]}>
         {placeholderText}
       </Animated.Text>
     </View>

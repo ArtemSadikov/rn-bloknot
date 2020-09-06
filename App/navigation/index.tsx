@@ -2,6 +2,7 @@ import React from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {Home} from '../screens/Home';
 import {View, StatusBar, StyleSheet, Text} from 'react-native';
+import {SavedNotes} from '../screens/SavedNotes';
 
 const styles = StyleSheet.create({
   container: {
@@ -40,7 +41,8 @@ const Header = () => {
 export function Routes() {
   return (
     <Stack.Navigator screenOptions={{header: () => <Header />}}>
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="home" component={Home} />
+      <Stack.Screen name="savedNotes" component={SavedNotes} />
     </Stack.Navigator>
   );
 }

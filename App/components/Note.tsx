@@ -31,12 +31,13 @@ const SCROLL_END_DRAG_EVENT = 42;
 const TRANSLATE_X = 500;
 
 interface Props {
-  onSaveNote: (value: INote) => void;
-  id: number;
+  onSaveNote?: (value: INote) => void;
+  id?: number;
+  oldNote?: INote;
 }
 
 export const Note = (props: Props) => {
-  const {id, onSaveNote} = props;
+  const {id, onSaveNote, oldNote} = props;
 
   const scrollPosition = useRef(new Animated.Value(0)).current;
   const [deleted, setDeleted] = useState(false);
@@ -60,7 +61,7 @@ export const Note = (props: Props) => {
       const position = e.nativeEvent.contentOffset.x;
 
       Keyboard.dismiss();
-      if (position >= SCROLL_END_DRAG_EVENT) {
+      if (position >= SCROLL_END_DRAG_EVENT || oldNote) {
         // delete note
         setDeleted(true);
         setTitle('');
@@ -70,10 +71,12 @@ export const Note = (props: Props) => {
         setTitle('');
         setDeleted(Boolean(title.trim().length));
         setTimeout(() => setDeleted(false), 100);
-        onSaveNote({title, note, id});
+        if (onSaveNote && id) {
+          onSaveNote({title, note, id});
+        }
       }
     },
-    [id, note, onSaveNote, title],
+    [id, note, oldNote, onSaveNote, title],
   );
 
   const rotateZ = useMemo(
@@ -88,7 +91,7 @@ export const Note = (props: Props) => {
   const translateX = useMemo(
     () =>
       scrollPosition.interpolate({
-        inputRange: [-100, 0, 100],
+        inputRange: [-300, 0, 300],
         outputRange: [TRANSLATE_X, 0, -TRANSLATE_X],
       }),
     [scrollPosition],
@@ -101,18 +104,21 @@ export const Note = (props: Props) => {
       scrollEventThrottle={1}
       directionalLockEnabled={true}
       onScrollEndDrag={onScrollEndDrag}
-      style={styles.scrollView}>
+      style={styles.scrollView}
+      scrollEnabled={!oldNote}>
       <Animated.View
         style={[styles.content, {transform: [{rotateZ}, {translateX}]}]}>
         <TitleInput
           placeholder="Title"
           onChangeText={onChangeTitleText}
           deleted={deleted}
+          note={oldNote}
         />
         <NoteInput
           placeholder="Something very cool"
           onChangeText={onChangeNoteText}
           deleted={deleted}
+          note={oldNote}
         />
       </Animated.View>
     </Animated.ScrollView>
