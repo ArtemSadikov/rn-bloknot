@@ -1,4 +1,4 @@
-import React, {useState, useRef, useCallback, useMemo} from 'react';
+import React, {useState, useRef, useCallback, useMemo, useEffect} from 'react';
 import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
 import Animated, {Easing} from 'react-native-reanimated';
 
@@ -33,20 +33,29 @@ const styles = StyleSheet.create({
     fontSize: 25,
     left: 10,
   },
-  blackTitle: {
-    color: 'black',
-  },
 });
 
 interface Props extends TextInputProps {
   onChangeText: (value: string) => void;
+  deleted: boolean;
 }
 
 const NoteInput = (props: Props) => {
   const [placeholderText] = useState(props.placeholder || props.value);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(props.value);
   const animValue = useRef(new Animated.Value(0)).current;
   const {onChangeText} = props;
+
+  useEffect(() => {
+    if (props.deleted) {
+      setValue('');
+      Animated.timing(animValue, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.quad,
+      }).start();
+    }
+  }, [props.deleted]);
 
   const handleChangeText = useCallback(
     (text: string) => {
@@ -57,7 +66,7 @@ const NoteInput = (props: Props) => {
   );
 
   const onBlur = useCallback(() => {
-    if (!value.trim().length) {
+    if (value && !value.trim().length) {
       Animated.timing(animValue, {
         toValue: 0,
         duration: 200,
@@ -92,14 +101,10 @@ const NoteInput = (props: Props) => {
           onFocus={onFocus}
           style={styles.textInputStyle}
           onChangeText={handleChangeText}
+          value={value}
         />
       </Animated.View>
-      <Animated.Text
-        style={[
-          {opacity},
-          styles.placeholder,
-          value.trim().length !== 0 && styles.blackTitle,
-        ]}>
+      <Animated.Text style={[{opacity}, styles.placeholder]}>
         {placeholderText}
       </Animated.Text>
     </View>
