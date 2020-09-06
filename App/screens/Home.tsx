@@ -3,6 +3,7 @@ import {View, StyleSheet, Text} from 'react-native';
 import {useAsyncStorage} from '@react-native-community/async-storage';
 import {Note} from '../components/Note';
 import {INote} from '../utils/interfaces';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 const styles = StyleSheet.create({
   container: {
@@ -16,9 +17,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export function Home() {
+export function Home({navigation}) {
   const {getItem, setItem} = useAsyncStorage('notes');
   const [notes, setNotes] = useState<INote[] | null>(null);
+
+  const onMoveToNotesPress = () => {
+    navigation.navigate('savedNotes');
+  };
 
   const readItemAsyncStorage = useCallback(async () => {
     try {
@@ -55,11 +60,13 @@ export function Home() {
     return notes ? notes[notes.length - 1].id + 1 : 0;
   }, [notes]);
 
-  console.log(notes);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text>&larr; Delete</Text>
+        <TouchableOpacity onPress={onMoveToNotesPress}>
+          <Text>Move to notes</Text>
+        </TouchableOpacity>
         <Text>Add &rarr;</Text>
       </View>
       <Note onSaveNote={onSaveNote} id={noteId} />

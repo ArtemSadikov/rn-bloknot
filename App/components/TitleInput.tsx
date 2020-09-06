@@ -1,6 +1,7 @@
 import React, {useRef, useCallback, useMemo, useState, useEffect} from 'react';
 import {StyleSheet, TextInput, TextInputProps, View} from 'react-native';
 import Animated, {Easing} from 'react-native-reanimated';
+import {INote} from '../utils/interfaces';
 
 const styles = StyleSheet.create({
   container: {
@@ -44,13 +45,14 @@ const styles = StyleSheet.create({
 interface Props extends TextInputProps {
   onChangeText: (value: string) => void;
   deleted: boolean;
+  note?: INote;
 }
 
 export const TitleInput = (props: Props) => {
+  const {onChangeText, note} = props;
   const animValue = useRef(new Animated.Value(0)).current;
   const [placeholderText] = useState(props.placeholder || props.value);
-  const [value, setValue] = useState('');
-  const {onChangeText} = props;
+  const [value, setValue] = useState(note?.title || '');
 
   useEffect(() => {
     if (props.deleted) {
@@ -89,7 +91,18 @@ export const TitleInput = (props: Props) => {
     }
   }, [animValue, value]);
 
-  const opacity = useMemo(
+  const inputContainerOpacity = useMemo(() => {
+    if (note) {
+      return 1;
+    }
+
+    return animValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+  }, [animValue, note]);
+
+  const placeholderOpacity = useMemo(
     () =>
       animValue.interpolate({
         inputRange: [0, 1],
@@ -100,7 +113,8 @@ export const TitleInput = (props: Props) => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.inputContainer, {opacity: animValue}]}>
+      <Animated.View
+        style={[styles.inputContainer, {opacity: inputContainerOpacity}]}>
         <TextInput
           onBlur={onBlur}
           onFocus={onFocus}
@@ -111,7 +125,7 @@ export const TitleInput = (props: Props) => {
       </Animated.View>
       <Animated.Text
         style={[
-          {opacity},
+          {opacity: placeholderOpacity},
           styles.placeholder,
           value.trim().length !== 0 && styles.blackTitle,
         ]}>
